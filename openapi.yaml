@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Summa API Platform (Synapse)
+  title: Summa API Platform (Synapse) - Draft
   contact:
     url: https://www.summacollege.nl
     name: Summa College - Integratie en ontwikkeling
