@@ -6,21 +6,19 @@ This repository contains the **OpenAPI design specifications** for the Synapse A
 
 ## Structure
 
-```
-openapi.yaml          # Root OpenAPI 3.0 specification
-```
+The OpenAPI specification will be added here once it is available.
 
 ## Getting Started
 
-The API specification is written in [OpenAPI 3.0](https://swagger.io/specification/) format (YAML).
+The API specification will be written in [OpenAPI 3.0](https://swagger.io/specification/) format (YAML).
 
 You can view and edit the spec using tools such as:
-- [Swagger Editor](https://editor.swagger.io/) – paste the contents of `openapi.yaml`
+- [Swagger Editor](https://editor.swagger.io/)
 - [Stoplight Studio](https://stoplight.io/studio)
 - Any editor with an OpenAPI/YAML plugin (e.g., VS Code + Swagger Viewer)
 
 ## Contributing
 
-1. Edit `openapi.yaml` (or the relevant component files) to describe new or updated endpoints.
+1. Add or edit the OpenAPI spec files to describe new or updated endpoints.
 2. Validate your changes with a linter such as [Spectral](https://stoplight.io/open-source/spectral) before opening a pull request.
 3. Open a pull request and describe the API changes you are proposing.
