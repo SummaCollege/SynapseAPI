@@ -1,0 +1,1919 @@
+openapi: 3.1.0
+info:
+  title: Summa API Platform (Synapse)
+  contact:
+    url: https://www.summacollege.nl
+    name: Summa College - Integratie en ontwikkeling
+    email: devops@summacollege.nl
+  version: 0.1.1
+  description: |
+    # Summa Synapse
+    Welkom bij de Summa College API documentatie! Deze API biedt toegang tot belangrijke gegevens over studenten, medewerkers en cursussen binnen onze onderwijsinstelling. Of je nu een ontwikkelaar bent die integraties bouwt of een applicatie wilt maken, deze documentatie helpt je op weg.
+
+    ## Opzet van de API en endpoints
+
+    - De API hanteert een duidelijke en consistente structuur voor alle endpoints: `/entiteit`, `/entiteit/{id}` en `/entiteit/{id}/subentiteit`.
+    - Wanneer je een entiteit of subentiteit rechtstreeks via het pad opvraagt (zoals `/studenten/{id}` of `/studenten/{id}/inschrijvingen`), ontvang je altijd het meest uitgebreide (volledige) model van die resource.
+    - Relaties tussen entiteiten (zoals stamgroepen of inschrijvingen bij een student) worden momenteel nog **NIET** als embedded object in responses opgenomen.
+    - Hoewel de schema’s verschillende modeltypes (basis, hoofd, volledig) tonen, wordt er op dit moment per endpoint of relatie altijd één type response teruggegeven: volledig model zonder gerelateerde data (tenzij anders aangegeven).
+
+    ## Toekomstige ontwikkelingen
+    - We werken aan het verbeteren van de embedded relaties, zodat je in één keer alle benodigde data kunt ophalen zonder extra requests.
+    - ** In de toekomst wordt het mogelijk om per relatie aan te geven of je deze wilt ophalen en in welke variant (basis- of hoofdmodel). **
+      Zo kun je bijvoorbeeld bij het ophalen van een student straks kiezen om stamgroepen als hoofdmodel op te halen, maar inschrijvingen helemaal niet.
+    - In de verre toekomst willen we naast onze eigen Synapse API ook vertaling maken naar de OOAPI standaard, zodat je ook OOAPI-conforme endpoints kunt gebruiken.
+    - We blijven de API uitbreiden met nieuwe entiteiten en functionaliteit, dus houd deze documentatie in de gaten voor updates.
+servers:
+- url: https://synapse.summacollege.nl
+  variables: {}
+  description: Productie
+- url: https://synapse-acc.summacollege.nl
+  variables: {}
+  description: Acceptatie
+- url: https://synapse-dev.summacollege.nl
+  variables: {}
+  description: Dev/Test (alleen intern)
+paths:
+  /groepen:
+    get:
+      tags:
+      - Groepen
+      summary: /groepen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Groep'
+                title: GetGroepenOk
+              example:
+              - naam: Stamgroep 1A
+                identifier: 1234-1a-ST
+          headers: {}
+          description: Lijst van alle groepen.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+      parameters:
+      - $ref: '#/components/parameters/QueryParameterVelden'
+      - $ref: '#/components/parameters/QueryParameterUitbreiden'
+      description: Alle (actieve) groepen ophalen
+      operationId: GetGroepen
+  /cursussen:
+    get:
+      tags:
+      - Cursussen
+      summary: /cursussen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasisModelCursus'
+              example:
+                naam: Nederlands B1
+                flexibel: false
+                identifier: CURS123
+          headers: {}
+          description: Lijst van alle beschikbare cursussen.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+      parameters:
+      - $ref: '#/components/parameters/QueryParameterVelden'
+      - $ref: '#/components/parameters/QueryParameterUitbreiden'
+      description: De beschikbare cursussen ophalen
+      operationId: GetCursussen
+  /studenten:
+    get:
+      tags:
+      - Studenten
+      summary: /studenten
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+                title: GetStudentenOk
+              example:
+              - geslacht: vrouw
+                roepnaam: Lisa
+                gebruiker:
+                  actief: true
+                  identifier: AV12345@mc-eindhoven.nl
+                  weergaveNaam: Lisa Peters
+                achternaam: Peters
+                identifier: AV12345
+                stamgroepen:
+                - naam: Stamgroep 1A
+                  identifier: SG123
+                geboortedatum: 2001-02-02
+                inschrijvingen:
+                - type: cursus
+                  actief:
+                    nu: true
+                  status: ingeschreven
+                  identifier: CURS123
+                contactgegevens:
+                - type: email
+                  waarde: l.peters@edu.summacollege.nl
+                  gebruik: organisatie
+              - geslacht: man
+                roepnaam: Bram
+                gebruiker:
+                  actief: true
+                  identifier: PS54321@mc-eindhoven.nl
+                  weergaveNaam: Bram de Vries
+                achternaam: de Vries
+                identifier: PS54321
+                stamgroepen:
+                - naam: Stamgroep 2B
+                  identifier: SG124
+                geboortedatum: 2002-03-03
+                inschrijvingen:
+                - type: cursus
+                  actief:
+                    nu: true
+                  status: ingeschreven
+                  identifier: CURS124
+                contactgegevens:
+                - type: email
+                  waarde: b.devries@edu.summacollege.nl
+                  gebruik: organisatie
+          headers: {}
+          description: Lijst van alle studenten.
+      parameters: []
+      description: Alle studenten ophalen
+      operationId: GetStudenten
+    parameters: []
+  /medewerkers:
+    get:
+      tags:
+      - Medewerkers
+      summary: /medewerkers
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Medewerker'
+                title: GetMedewerkersOk
+              example:
+              - geslacht: man
+                roepnaam: Jan
+                gebruiker:
+                  actief: true
+                  identifier: JAJA@summacollege.nl
+                  weergaveNaam: Jan Jansen
+                achternaam: Jansen
+                identifier: '123456'
+                geboortedatum: 1980-01-01
+                contactgegevens:
+                - type: email
+                  waarde: j.jansen@summacollege.nl
+                  gebruik: organisatie
+                - type: email
+                  waarde: JJNS@summacollege.nl
+                  gebruik: organisatie
+          headers: {}
+          description: Lijst van alle medewerkers.
+      parameters: []
+      description: Alle medewerkers ophalen
+      operationId: GetMedewerkers
+    parameters: []
+  /stamgroepen:
+    get:
+      tags:
+      - Stamgroepen
+      summary: /stamgroepen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stamgroep'
+                title: GetStamgroepenOk
+              example:
+              - naam: Stamgroep 1A
+                identifier: SG123
+          headers: {}
+          description: Lijst van alle stamgroepen.
+      deprecated: true
+      parameters: []
+      description: Alle stamgroepen ophalen
+      operationId: GetStamgroepen
+  /organisaties:
+    get:
+      tags:
+      - Organisaties
+      summary: /organisaties
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organisatie'
+                title: GetStudentenOk
+              example:
+              - geslacht: vrouw
+                roepnaam: Lisa
+                gebruiker:
+                  actief: true
+                  identifier: AV12345@mc-eindhoven.nl
+                  weergaveNaam: Lisa Peters
+                achternaam: Peters
+                identifier: AV12345
+                stamgroepen:
+                - naam: Stamgroep 1A
+                  identifier: SG123
+                geboortedatum: 2001-02-02
+                inschrijvingen:
+                - type: cursus
+                  actief:
+                    nu: true
+                  status: ingeschreven
+                  identifier: CURS123
+                contactgegevens:
+                - type: email
+                  waarde: l.peters@edu.summacollege.nl
+                  gebruik: organisatie
+              - geslacht: man
+                roepnaam: Bram
+                gebruiker:
+                  actief: true
+                  identifier: PS54321@mc-eindhoven.nl
+                  weergaveNaam: Bram de Vries
+                achternaam: de Vries
+                identifier: PS54321
+                stamgroepen:
+                - naam: Stamgroep 2B
+                  identifier: SG124
+                geboortedatum: 2002-03-03
+                inschrijvingen:
+                - type: cursus
+                  actief:
+                    nu: true
+                  status: ingeschreven
+                  identifier: CURS124
+                contactgegevens:
+                - type: email
+                  waarde: b.devries@edu.summacollege.nl
+                  gebruik: organisatie
+          headers: {}
+          description: Lijst van alle organisaties.
+      parameters: []
+      description: Alle organisaties ophalen
+      operationId: GetOrganisaties
+    parameters: []
+  /groepen/{identifier}:
+    get:
+      tags:
+      - Groepen
+      summary: /groepen/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelGroep'
+              example:
+                naam: Stamgroep 1A
+                identifier: SG123
+                begeleiders:
+                  actief:
+                    nu: true
+                  roepnaam: Jan
+                  achternaam: Jansen
+          headers: {}
+          description: Details van een enkele groep.
+      parameters:
+      - in: path
+        name: identifier
+        schema:
+          type: string
+        required: true
+        description: Unieke identifier van de groep.
+      description: Een enkele groep ophalen
+      operationId: GetGroep
+  /cursussen/{identifier}:
+    get:
+      tags:
+      - Cursussen
+      summary: /cursussen/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelCursus'
+              example:
+                naam: Nederlands B1
+                flexibel: false
+          headers: {}
+          description: Details van een specifieke cursus.
+      parameters: []
+      description: De opgegeven cursus ophalen
+      operationId: GetCursus
+    parameters:
+    - $ref: '#/components/parameters/PadParameterCursusIdentifier'
+  /studenten/{identifier}:
+    get:
+      tags:
+      - Studenten
+      summary: /studenten/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelStudent'
+              example:
+                roepnaam: Lisa
+                achternaam: Peters
+                identifier: AV12345
+          headers: {}
+          description: Details van een specifieke student.
+      parameters: []
+      description: Een specifieke student ophalen
+      operationId: GetStudent
+    parameters:
+    - $ref: '#/components/parameters/PadParameterStudentIdentifier'
+  /medewerkers/{identifier}:
+    get:
+      tags:
+      - Medewerkers
+      summary: /medewerkers/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelMedewerker'
+              example:
+                geslacht: man
+                roepnaam: Jan
+                gebruiker:
+                  actief: true
+                  identifier: JAJA@summacollege.nl
+                  weergaveNaam: Jan Jansen
+                achternaam: Jansen
+                identifier: '123456'
+                medewerker:
+                  roepnaam: Jan
+                  achternaam: Jansen
+                geboortedatum: 1980-01-01
+                contactgegevens:
+                - type: email
+                  waarde: j.jansen@summacollege.nl
+                  gebruik: organisatie
+                - type: email
+                  waarde: JJNS@summacollege.nl
+                  gebruik: organisatie
+          headers: {}
+          description: Details van een specifieke medewerker.
+      parameters: []
+      description: Een specifieke medewerker ophalen
+      operationId: GetMedewerker
+    parameters:
+    - $ref: '#/components/parameters/PadParameterMedewerkerIdentifier'
+  /stamgroepen/{identifier}:
+    get:
+      tags:
+      - Stamgroepen
+      summary: /stamgroepen/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelStamgroep'
+              example:
+                naam: Stamgroep 1A
+                identifier: SG123
+                begeleiders:
+                  actief:
+                    nu: true
+                  roepnaam: Jan
+                  achternaam: Jansen
+          headers: {}
+          description: Details van een enkele stamgroep.
+      deprecated: true
+      parameters:
+      - in: path
+        name: identifier
+        schema:
+          type: string
+        required: true
+        description: Unieke identifier van de stamgroep.
+      description: Een enkele stamgroep ophalen
+      operationId: GetStamgroep
+  /organisaties/{identifier}:
+    get:
+      tags:
+      - Organisaties
+      summary: /organisaties/{identifier}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelOrganisatie'
+              example:
+                roepnaam: Lisa
+                achternaam: Peters
+                identifier: AV12345
+          headers: {}
+          description: Details van een specifieke organisatie.
+      parameters: []
+      description: Een specifieke organisatie ophalen
+      operationId: GetOrganisatie
+    parameters:
+    - $ref: '#/components/parameters/PadParameterOrganisatieIdentifier'
+  /studenten/{identifier}/adressen:
+    get:
+      tags:
+      - Studenten
+      - Adressen
+      summary: /studenten/{identifier}/adressen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentAdres'
+              example:
+                type: email
+                waarde: PS12345@edu.summacollege.nl
+                gebruik: organisatie
+                medewerker:
+                  roepnaam: Piet
+                  achternaam: Student
+                  identifier: PS12345
+          headers: {}
+          description: Adressen van een specifieke student.
+      parameters: []
+      description: De adressen van een specifieke student opvragen
+      operationId: GetStudentAdressen
+    parameters:
+    - $ref: '#/components/parameters/PadParameterStudentIdentifier'
+  /studenten/{identifier}/gebruiker:
+    get:
+      tags:
+      - Studenten
+      - Gebruikers
+      summary: /studenten/{identifier}/gebruiker
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelGebruiker'
+              example:
+                actief: true
+                identifier: AV12345@mc-eindhoven.nl
+                medewerker:
+                  roepnaam: Lisa
+                  achternaam: Peters
+                  identifier: AV12345
+                weergaveNaam: Lisa Peters
+          headers: {}
+          description: Gebruikersgegevens voor een specifieke student (SSO/IDP).
+      parameters: []
+      description: De gebruiker voor een specifieke student ophalen
+      operationId: GetStudentGebruiker
+    parameters:
+    - $ref: '#/components/parameters/PadParameterStudentIdentifier'
+  /medewerkers/{identifier}/adressen:
+    get:
+      tags:
+      - Medewerkers
+      - Adressen
+      summary: /medewerkers/{identifier}/adressen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentAdres'
+              example:
+                type: email
+                waarde: l.pieters@summacollege.nl
+                gebruik: organisatie
+                medewerker:
+                  roepnaam: Lisa
+                  achternaam: Pieters
+                  identifier: LPIETERS
+          headers: {}
+          description: Adressen van een specifieke medewerker.
+      parameters: []
+      description: De adressen van een specifieke medewerker opvragen
+      operationId: getAdressen
+    parameters:
+    - $ref: '#/components/parameters/PadParameterMedewerkerIdentifier'
+  /medewerkers/{identifier}/gebruiker:
+    get:
+      tags:
+      - Gebruikers
+      - Medewerkers
+      summary: /medewerkers/{identifier}/gebruiker
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelGebruiker'
+              example:
+                actief: true
+                identifier: VRKA@summacollege.nl
+                medewerker:
+                  roepnaam: Karin
+                  achternaam: de Vries
+                  identifier: VRKA
+                weergaveNaam: Karin de Vries
+          headers: {}
+          description: Gebruikersgegevens voor een specifieke medewerker (SSO/IDP).
+      parameters: []
+      description: De gebruiker voor een specifieke medewerker ophalen
+      operationId: GetMedewerkerGebruiker
+    parameters:
+    - $ref: '#/components/parameters/PadParameterMedewerkerIdentifier'
+  /studenten/{identifier}/begeleiders:
+    get:
+      tags:
+      - Studenten
+      - Studentbegeleiders
+      summary: /studenten/{identifier}/begeleiders
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Begeleider'
+                title: GetMedewerkersOk
+              example:
+              - actief:
+                  nu: true
+                roepnaam: Jan
+                achternaam: Jansen
+                identifier: '123456'
+                contactgegevens:
+                - type: email
+                  waarde: j.jansen@summacollege.nl
+                  gebruik: organisatie
+          headers: {}
+          description: Lijst van alle begeleiders van de opgegeven student.
+      parameters:
+      - in: path
+        name: identifier
+        schema:
+          type: string
+        required: true
+        description: Unieke identifier van de student.
+      description: Alle begeleiders ophalen van de opgegeven student
+      operationId: getBegeleiders
+    parameters: []
+  /studenten/{identifier}/inschrijvingen:
+    get:
+      tags:
+      - Inschrijvingen
+      summary: /studenten/{identifier}/inschrijvingen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoofdModelInschrijving'
+              example:
+                type: cursus
+                actief:
+                  nu: true
+                status: ingeschreven
+                identifier: CURS123
+          headers: {}
+          description: Inschrijvingen van een specifieke student.
+      parameters: []
+      description: De inschrijvingen van een specifieke student opvragen
+      operationId: GetStudentInschrijvingen
+    parameters:
+    - $ref: '#/components/parameters/PadParameterStudentIdentifier'
+  /medewerkers/{identifier}/aanstellingen:
+    get:
+      tags:
+      - Medewerkers
+      - Aanstellingen
+      summary: /medewerkers/{identifier}/aanstellingen
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VolledigModelAanstelling'
+              example:
+                actief:
+                  nu: true
+                functie:
+                  code: DOC
+                  naam: Docent
+                  groep: Onderwijs
+                categorie: onderwijs
+                identifier: AAN123
+                organisatieeenheid:
+                  type: team
+                  identifier: TEAM1
+          headers: {}
+          description: Aanstellingen van een specifieke medewerker.
+      parameters: []
+      description: De aanstellingen van een specifieke medewerker opvragen
+      operationId: GetMedewerkerAanstellingen
+    parameters:
+    - $ref: '#/components/parameters/PadParameterMedewerkerIdentifier'
+  /studenten/{identifier}/contactgegevens:
+    get:
+      tags:
+      - Contactgegevens
+      - Studenten
+      summary: /studenten/{identifier}/contactgegevens
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentContactgegeven'
+              example:
+                type: email
+                waarde: PS12345@edu.summacollege.nl
+                gebruik: organisatie
+                medewerker:
+                  roepnaam: Piet
+                  achternaam: Student
+                  identifier: PS12345
+          headers: {}
+          description: Contactgegevens van een specifieke student.
+      parameters: []
+      description: De contactgegevens van een specifieke student opvragen
+      operationId: GetStudentContactGegevens
+    parameters:
+    - $ref: '#/components/parameters/PadParameterStudentIdentifier'
+  /medewerkers/{identifier}/contactgegevens:
+    get:
+      tags:
+      - Contactgegevens
+      - Medewerkers
+      summary: /medewerkers/{identifier}/contactgegevens
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentContactgegeven'
+              example:
+                type: email
+                waarde: l.pieters@summacollege.nl
+                gebruik: organisatie
+                medewerker:
+                  roepnaam: Lisa
+                  achternaam: Pieters
+                  identifier: LPIETERS
+          headers: {}
+          description: Contactgegevens van een specifieke medewerker.
+      parameters: []
+      description: De contactgegevens van een specifieke medewerker opvragen
+      operationId: GetMedewerkerContactGegevens
+    parameters:
+    - $ref: '#/components/parameters/PadParameterMedewerkerIdentifier'
+components:
+  schemas:
+    Groep:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelGroep'
+      - $ref: '#/components/schemas/BasisModelGroep'
+      title: Groep
+    Cursus:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelCursus'
+      - $ref: '#/components/schemas/BasisModelCursus'
+      title: Cursus
+    Persoon:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelPersoon'
+      - $ref: '#/components/schemas/BasisModelPersoon'
+      title: Persoon
+    Student:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelStudent'
+      - $ref: '#/components/schemas/BasisModelStudent'
+      title: Student
+    Gebruiker:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelGebruiker'
+      - $ref: '#/components/schemas/BasisModelGebruiker'
+      title: Gebruiker
+    Stamgroep:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelStamgroep'
+      - $ref: '#/components/schemas/BasisModelStamgroep'
+      title: Stamgroep
+      deprecated: true
+    Begeleider:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelBegeleider'
+      - $ref: '#/components/schemas/BasisModelBegeleider'
+      title: Inschrijving
+    Medewerker:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelMedewerker'
+      - $ref: '#/components/schemas/BasisModelMedewerker'
+      title: Medewerker
+    Aanstelling:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelAanstelling'
+      - $ref: '#/components/schemas/BasisModelAanstelling'
+      title: Aanstelling
+    Organisatie:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelOrganisatie'
+      - $ref: '#/components/schemas/BasisModelOrganisatie'
+      title: Organisatie
+    Inschrijving:
+      oneOf:
+      - $ref: '#/components/schemas/HoofdModelInschrijving'
+      - $ref: '#/components/schemas/BasisModelInschrijving'
+      title: Inschrijving
+    ComponentAdres:
+      type: object
+      title: Adres component
+      x-tags:
+      - Componenten
+      - Adressen
+      required:
+      - type
+      - straat
+      - postcode
+      - plaats
+      - huisnummer
+      - land
+      - staat
+      - huisnummerOnderdelen
+      - actief
+      - actief
+      properties:
+        land:
+          type: object
+          required:
+          - code
+          - naam
+          - engelseNaam
+          properties:
+            code:
+              type: string
+              description: ISO 3166-1 alpha-3 landcode
+            naam:
+              type: string
+              description: Nederlanse landnaam
+            engelseNaam:
+              type: string
+              description: Engelse landnaam
+          description: Land
+        type:
+          enum:
+          - woon
+          - factuur
+          - post
+          type: string
+          title: Type
+          description: Type adres
+        actief:
+          $ref: '#/components/schemas/ComponentActief'
+        plaats:
+          type: string
+          description: Plaats
+        straat:
+          type: string
+          title: Waarde
+          description: Straatnaam
+        postcode:
+          type: string
+          description: Postcode
+        huisnummer:
+          type: string
+          description: Huisnummer samengevoegd
+        adresregels:
+          type: array
+          items:
+            type: string
+          description: Indien beschikbaar/aangeleverd adresregels
+        huisnummerOnderdelen:
+          type: object
+          required:
+          - basis
+          properties:
+            basis:
+              type: string
+              description: Basis huisnummer
+            prefix:
+              type: string
+              description: Voorvoegsel huisnummer (indien gescheiden beschikbaar uit bron)
+            suffix:
+              type: string
+              description: Voorvoegsel huisnummer (indien gescheiden beschikbaar uit bron)
+          description: Losse onderdelen huisnummer (indien beschikbaar)
+    CursusModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelCursus'
+      - $ref: '#/components/schemas/HoofdModelCursus'
+      - $ref: '#/components/schemas/BasisModelCursus'
+      title: Cursus schema's
+      x-tags:
+      - Cursussen
+    BasisModelGroep:
+      type: object
+      title: Basis model, groep
+      required:
+      - identifier
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierGroep'
+    ComponentActief:
+      type: object
+      title: Actief component
+      x-tags:
+      - Componenten
+      required:
+      - nu
+      properties:
+        nu:
+          type: boolean
+          description: |-
+            Geeft aan of de huidige datum (/tijd) binnen het datumbereik valt.
+
+            Vanaf == vandaag of in het verleden
+            Tot == in de toekomst
+
+            Beide leeg dan false
+        tot:
+          type: string
+          title: Tot
+          format: date
+          description: Tot datum (exclusief)
+        vanaf:
+          type: string
+          title: Vanaf
+          format: date
+          description: Vanaf datum (inclusief)
+    HoofdModelGroep:
+      allOf:
+      - $ref: '#/components/schemas/BasisModelGroep'
+      - type: object
+        properties:
+          naam:
+            type: string
+          type:
+            enum:
+            - Stamgroep
+            - Lesgroep
+            - Klas
+            - Tutorgroep
+            - Sectie
+            - Examenklas
+            - Overig
+            type: string
+            title: Type
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+      title: Hoofd model, groep
+    IdentifierGroep:
+      type: string
+      title: Identifier, gebruiker
+      description: Code groep
+    PersoonModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelPersoon'
+      - $ref: '#/components/schemas/HoofdModelPersoon'
+      - $ref: '#/components/schemas/BasisModelPersoon'
+      title: Persoon schema's
+      x-tags:
+      - Personen
+    StudentModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelStudent'
+      - $ref: '#/components/schemas/HoofdModelStudent'
+      - $ref: '#/components/schemas/BasisModelStudent'
+      title: Student schema's
+      x-tags:
+      - Studenten
+    BasisModelCursus:
+      type: object
+      title: Basis model, inschrijving
+      required:
+      - identifier
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierCursus'
+    HoofdModelCursus:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelCursus'
+      - enum:
+        - Ontwerp
+        - Gepubliceerd
+        - Beeindigd
+        type: string
+      - type: object
+        required:
+        - naam
+        - flexibel
+        - type
+        properties:
+          naam:
+            type: string
+          flexibel:
+            type: boolean
+      title: Hoofd model, inschrijving
+      properties: {}
+    IdentifierCursus:
+      type: string
+      title: Identifier, cursus
+      pattern: CURS[0-9]{1,8}
+      description: Cursuscode
+    BasisModelPersoon:
+      type: object
+      title: Basis model, persoon
+      properties: {}
+    BasisModelStudent:
+      type: object
+      title: Basis model, student
+      required: []
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierStudent'
+    GebruikerModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelGebruiker'
+      - $ref: '#/components/schemas/HoofdModelGebruiker'
+      - $ref: '#/components/schemas/BasisModelGebruiker'
+      title: Gebruiker schema's
+      x-tags:
+      - Gebruikers
+    HoofdModelPersoon:
+      allOf:
+      - $ref: '#/components/schemas/BasisModelPersoon'
+      - type: object
+        required:
+        - roepnaam
+        - achternaam
+        properties:
+          geslacht:
+            enum:
+            - man
+            - vrouw
+            - onbekend
+            type: string
+            title: Geslacht
+          roepnaam:
+            type: string
+            title: Roepnaam
+          voornamen:
+            type: array
+            items:
+              type: string
+            title: Voornamen
+          achternaam:
+            type: string
+          meisjesnaam:
+            type: string
+            title: Geboortenaam
+          voorletters:
+            type: array
+            items:
+              type: string
+              maxLength: 1
+              minLength: 0
+          geboortedatum:
+            type: string
+            title: Geboortedatum
+            format: date
+          tussenvoegsel:
+            type: string
+          meisjesnaamtussenvoegsel:
+            type: string
+      title: Hoofd model, persoon
+      description: ''
+    HoofdModelStudent:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelStudent'
+      - $ref: '#/components/schemas/HoofdModelPersoon'
+      - type: object
+        properties: {}
+      title: Hoofd model, student
+      properties: {}
+    IdentifierStudent:
+      type: string
+      title: Identifier, gebruiker
+      pattern: '[A-Za-z]{2}[0-9]+'
+      description: Gebruikersnaam student
+    StamgroepModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelStamgroep'
+      - $ref: '#/components/schemas/HoofdModelStamgroep'
+      - $ref: '#/components/schemas/BasisModelStamgroep'
+      title: Stamgroep schema's
+      x-tags:
+      - Stamgroepen
+      deprecated: true
+    BegeleiderModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelBegeleider'
+      - $ref: '#/components/schemas/HoofdModelBegeleider'
+      - $ref: '#/components/schemas/BasisModelBegeleider'
+      title: Studentbegeleider schema's
+      x-tags:
+      - Studentbegeleiders
+    MedewerkerModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelMedewerker'
+      - $ref: '#/components/schemas/HoofdModelMedewerker'
+      - $ref: '#/components/schemas/BasisModelMedewerker'
+      title: Medewerker schema's
+      x-tags:
+      - Medewerkers
+    OrganisatieEenheid:
+      oneOf:
+      - $ref: '#/components/schemas/BasisModelOrganisatieeenheid'
+      - $ref: '#/components/schemas/HoofdModelOrganisatieEenheid'
+    VolledigModelGroep:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelGroep'
+      - type: object
+        required:
+        - begeleiders
+        - referenties
+        properties:
+          studenten:
+            type: array
+            items:
+              allOf:
+              - $ref: '#/components/schemas/Student'
+              - type: object
+                required:
+                - actief
+                properties:
+                  actief:
+                    $ref: '#/components/schemas/ComponentActief'
+            uniqueItems: true
+          begeleiders:
+            type: array
+            items:
+              allOf:
+              - $ref: '#/components/schemas/Medewerker'
+              - type: object
+                required:
+                - actief
+                properties:
+                  actief:
+                    $ref: '#/components/schemas/ComponentActief'
+            uniqueItems: true
+          referenties:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentReferentie'
+            title: Referenties
+            description: Referenties naar andere entiteiten
+            uniqueItems: true
+      title: Volledig model, gebruiker
+    AanstellingModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelAanstelling'
+      - $ref: '#/components/schemas/HoofdModelAanstelling'
+      - $ref: '#/components/schemas/BasisModelAanstelling'
+      title: Aanstelling schema's
+      x-tags:
+      - Aanstellingen
+    BasisModelGebruiker:
+      type: object
+      title: Basis model, gebruiker
+      required:
+      - identifier
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierGebruiker'
+    BasisModelStamgroep:
+      type: object
+      title: Basis model, stamgroep
+      required:
+      - identifier
+      deprecated: true
+      properties:
+        naam:
+          type: string
+          title: Naam
+        identifier:
+          type: string
+          title: Identifier
+    ComponentIdentifier:
+      type: object
+      title: Identifier component
+      x-tags:
+      - Componenten
+      required:
+      - systeem
+      - naam
+      - waarde
+      properties:
+        naam:
+          type: string
+          title: Naam
+          examples:
+          - id
+          - uuid
+          description: De naam van de identifier (in het externe systeem, of afgeleid hiervan)
+        waarde:
+          type: string
+          title: Waarde
+          description: De identifier waarde (afhankelijk van systeem, altijd getoond als string)
+        systeem:
+          type: string
+          title: Systeem
+          examples:
+          - Eduarte
+          description: Het systeem waarin deze entiteit met deze identifier bekend is
+    ComponentReferentie:
+      type: object
+      title: Entiteit component
+      x-tags:
+      - Componenten
+      required:
+      - entiteit
+      - identifier
+      properties:
+        entiteit:
+          type: string
+          title: Entiteit
+          description: De entiteit van de referentie
+        identifier:
+          oneOf:
+          - $ref: '#/components/schemas/IdentifierGroep'
+          - $ref: '#/components/schemas/IdentifierCursus'
+          - $ref: '#/components/schemas/IdentifierStudent'
+          - $ref: '#/components/schemas/IdentifierGebruiker'
+          - $ref: '#/components/schemas/IdentifierMedewerker'
+          - $ref: '#/components/schemas/IdentifierAanstelling'
+          - $ref: '#/components/schemas/IdentifierInschrijving'
+          - $ref: '#/components/schemas/IdentifierInschrijvingCursus'
+          - $ref: '#/components/schemas/IdentifierOrganisatieeenheid'
+          - $ref: '#/components/schemas/IdentifierInschrijvingOpleiding'
+          - $ref: '#/components/schemas/IdentifierInschrijvingArrangement'
+          - $ref: '#/components/schemas/IdentifierOrganisatie'
+    HoofdModelGebruiker:
+      allOf:
+      - $ref: '#/components/schemas/BasisModelGebruiker'
+      - type: object
+        required:
+        - identifier
+        - actief
+        properties:
+          actief:
+            type: boolean
+            title: Actief
+          weergaveNaam:
+            type: string
+            title: Weergave naam
+      title: Hoofd model, gebruiker
+    HoofdModelStamgroep:
+      allOf:
+      - $ref: '#/components/schemas/BasisModelStamgroep'
+      - type: object
+        properties:
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+      title: Hoofd model, stamgroep
+      deprecated: true
+    IdentifierGebruiker:
+      type: string
+      title: Identifier, gebruiker
+      format: email
+      description: User Principal Name
+    OrganisatieModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelOrganisatie'
+      - $ref: '#/components/schemas/HoofdModelOrganisatie'
+      - $ref: '#/components/schemas/BasisModelOrganisatie'
+      title: Organisatie schema's
+      x-tags:
+      - Organisaties
+    VolledigModelCursus:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelCursus'
+      - type: object
+        required:
+        - student
+        - ontwikkelaars
+        - leeractiviteiten
+        - referenties
+        properties:
+          ontwikkelaars:
+            type: array
+            items:
+              $ref: '#/components/schemas/Medewerker'
+            uniqueItems: true
+          leeractiviteiten:
+            type: array
+            items:
+              type: object
+              properties: {}
+      title: Volledig model, inschrijving
+    BasisModelBegeleider:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelMedewerker'
+      title: Basis model, begeleider
+      properties: {}
+    BasisModelMedewerker:
+      type: object
+      title: Basis model, medewerker
+      required: []
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierMedewerker'
+    HoofdModelBegeleider:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelBegeleider'
+      - type: object
+        required:
+        - actief
+        - roepnaam
+        - achternaam
+        properties:
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+            description: Medewerker begeleid gerelateerde student van/tot
+          roepnaam:
+            type: string
+          achternaam:
+            type: string
+          tussenvoegsel:
+            type: string
+          contactgegevens:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentContactgegeven'
+      title: Hoofd model, begeleider
+      properties: {}
+    HoofdModelMedewerker:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelMedewerker'
+      - $ref: '#/components/schemas/HoofdModelPersoon'
+      title: Hoofd model, medewerker
+      properties: {}
+    IdentifierMedewerker:
+      type: string
+      description: '"Uniek Summa persooneelsnummer"'
+    InschrijvingModellen:
+      oneOf:
+      - $ref: '#/components/schemas/VolledigModelInschrijving'
+      - $ref: '#/components/schemas/HoofdModelInschrijving'
+      - $ref: '#/components/schemas/BasisModelInschrijving'
+      title: Inschrijving schema's
+      x-tags:
+      - Inschrijvingen
+    VolledigModelPersoon:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelPersoon'
+      - type: object
+        properties:
+          adressen:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentAdres'
+            title: Adressen
+            uniqueItems: true
+          gebruiker:
+            $ref: '#/components/schemas/Gebruiker'
+          contactgegevens:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentContactgegeven'
+            title: Contactgegevens
+            uniqueItems: true
+      title: Volledig model, persoon
+    VolledigModelStudent:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelStudent'
+      - $ref: '#/components/schemas/VolledigModelPersoon'
+      - type: object
+        required: []
+        properties:
+          groepen:
+            type: array
+            items:
+              $ref: '#/components/schemas/Groep'
+            uniqueItems: true
+          inschrijvingen:
+            type: array
+            items:
+              $ref: '#/components/schemas/Inschrijving'
+            uniqueItems: true
+      title: Volledig model, student
+    BasisModelAanstelling:
+      type: object
+      title: Basis model, aanstelling
+      required:
+      - identifier
+      - categorie
+      properties:
+        categorie:
+          enum:
+          - onderwijs
+          - bedrijfsvoering
+          type: string
+        identifier:
+          $ref: '#/components/schemas/IdentifierAanstelling'
+    BasisModelFoutMelding:
+      type: object
+      title: Basis model, foutmelding
+      required:
+      - code
+      - melding
+      properties:
+        code:
+          type: string
+          title: Code
+        melding:
+          type: string
+          title: Melding
+    BasisModelOrganisatie:
+      type: object
+      title: Basis model, student
+      required: []
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierOrganisatie'
+    HoofdModelAanstelling:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelAanstelling'
+      - type: object
+        required:
+        - actief
+        - organisatieeenheid
+        properties:
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+          functie:
+            type: object
+            title: Title
+            required:
+            - groep
+            - code
+            - naam
+            properties:
+              code:
+                type: string
+                title: Code
+              naam:
+                type: string
+                title: Naam
+              groep:
+                type: string
+                title: Groep
+          organisatieeenheid:
+            $ref: '#/components/schemas/OrganisatieEenheid'
+      title: Hoofd model, aanstelling
+      properties: {}
+    HoofdModelOrganisatie:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelOrganisatie'
+      - type: object
+        required:
+        - naam
+        - actief
+        - relatieType
+        properties:
+          naam:
+            type: string
+            description: Naam van de organistatie
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+          relatieType:
+            enum:
+            - Overig
+            - BPV
+            type: string
+            description: Relatie type(/soort)
+      title: Hoofd model, organisatie
+      properties: {}
+    IdentifierAanstelling:
+      type: string
+      title: Identifier, aanstelling
+      description: Voorlopig gebruiken we hier een intern HR UUID, **GEBRUIK DEZE IDENTIFIER NOG NIET!**
+    IdentifierOrganisatie:
+      type: string
+      title: Identifier, organisatie
+      pattern: '[A-Za-z0-9_-]+'
+      description: Identifier organisatie
+    BasisModelInschrijving:
+      type: object
+      title: Basis model, inschrijving
+      required:
+      - type
+      - identifier
+      properties:
+        type:
+          enum:
+          - opleiding
+          - arrangement
+          - cursus
+          type: string
+        identifier:
+          $ref: '#/components/schemas/IdentifierInschrijving'
+    HoofdModelInschrijving:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/BasisModelInschrijving'
+      - type: object
+        required:
+        - actief
+        - status
+        properties:
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+          status:
+            enum:
+            - intake
+            - voorbereid
+            - contract
+            - ingeschreven
+            type: string
+            title: Status
+      title: Hoofd model, inschrijving
+      properties: {}
+    IdentifierInschrijving:
+      anyOf:
+      - $ref: '#/components/schemas/IdentifierInschrijvingOpleiding'
+      - $ref: '#/components/schemas/IdentifierInschrijvingArrangement'
+      - $ref: '#/components/schemas/IdentifierInschrijvingCursus'
+      title: Identifier, inschrijving
+    VolledigModelGebruiker:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelGebruiker'
+      - type: object
+        required:
+        - medewerker
+        properties: {}
+      title: Volledig model, gebruiker
+    VolledigModelStamgroep:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelStamgroep'
+      - type: object
+        required:
+        - begeleiders
+        properties:
+          studenten:
+            type: array
+            items:
+              $ref: '#/components/schemas/Student'
+            uniqueItems: true
+          begeleiders:
+            type: array
+            items:
+              $ref: '#/components/schemas/Medewerker'
+      title: Volledig model, gebruiker
+      deprecated: true
+    ComponentContactgegeven:
+      type: object
+      title: Contactgegeven component
+      x-tags:
+      - Componenten
+      - Contactgegevens
+      required:
+      - type
+      - gebruik
+      - waarde
+      properties:
+        type:
+          enum:
+          - email
+          - telefoon
+          - mobiel
+          type: string
+          title: Type
+        waarde:
+          type: string
+          title: Waarde
+        gebruik:
+          enum:
+          - eigen
+          - organisatie
+          - intern
+          - factuur
+          type: string
+          title: Gebruik
+    VolledigModelBegeleider:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelBegeleider'
+      - type: object
+        required:
+        - studenten
+        properties:
+          studenten:
+            type: array
+            items:
+              type: object
+              required:
+              - studenten
+              properties:
+                studenten:
+                  $ref: '#/components/schemas/Student'
+            description: De studenten die begeleid worden door de betreffende begeleider (medewerker)
+            uniqueItems: true
+      title: Volledig model, begeleider
+      properties: {}
+    VolledigModelMedewerker:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelMedewerker'
+      - $ref: '#/components/schemas/VolledigModelPersoon'
+      - type: object
+        required:
+        - actief
+        properties:
+          actief:
+            $ref: '#/components/schemas/ComponentActief'
+            description: |-
+              Actief geeft aan of deze medewerker op dit moment een actieve aanstelling heeft.
+
+              **Nu:** Momenteel een actieve aanstelling (zie details).
+              **Van:** Datum eerste "werkdag" ooit bij onze organisatie.
+              **Tot:** Datum laaste "werkdag" ooit bij onze organisatie, behalve als er een aanstelling zonder einddatum is dan blijft deze leeg.
+      - type: object
+        required: []
+        properties:
+          groepen:
+            type: array
+            items:
+              $ref: '#/components/schemas/Groep'
+            uniqueItems: true
+          aanstellingen:
+            type: array
+            items:
+              $ref: '#/components/schemas/Aanstelling'
+            uniqueItems: true
+      title: Volledig model, medewerker
+    VolledigModelAanstelling:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelAanstelling'
+      - type: object
+        required:
+        - medewerker
+        properties:
+          medewerker:
+            $ref: '#/components/schemas/Medewerker'
+      title: Volledig model, aanstelling
+    VolledigModelOrganisatie:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelOrganisatie'
+      - type: object
+        required: []
+        properties:
+          adressen:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentAdres'
+            title: Adressen
+            uniqueItems: true
+          identifiers:
+            type: array
+            items:
+              anyOf:
+              - $ref: '#/components/schemas/ComponentIdentifierEduarteDebiteurnummer'
+                description: Debiteurnummer in Eduarte
+              - $ref: '#/components/schemas/ComponentIdentifier'
+                description: Overige externe identifier
+            description: Externe identifiers
+          referenties:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentReferentie'
+            title: Referenties
+            description: Referenties naar andere entiteiten
+            uniqueItems: true
+          inschrijvingen:
+            type: array
+            items:
+              $ref: '#/components/schemas/Inschrijving'
+            uniqueItems: true
+          contactgegevens:
+            type: array
+            items:
+              $ref: '#/components/schemas/ComponentContactgegeven'
+            title: Contactgegevens
+            uniqueItems: true
+      title: Volledig model, organisatie
+    VolledigModelInschrijving:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelInschrijving'
+      - type: object
+        required:
+        - student
+        properties:
+          student:
+            $ref: '#/components/schemas/Student'
+      title: Volledig model, inschrijving
+    OrganisatieEenheidModellen:
+      oneOf:
+      - $ref: '#/components/schemas/BasisModelOrganisatieeenheid'
+      - $ref: '#/components/schemas/HoofdModelOrganisatieEenheid'
+      - $ref: '#/components/schemas/VolledigModelOrganisatieEenheid'
+      x-tags:
+      - OrganisatieEenheid
+    BasisModelOrganisatieeenheid:
+      type: object
+      title: Basis model, organisatie-eenheid
+      required:
+      - identifier
+      - type
+      properties:
+        type:
+          enum:
+          - instelling
+          - propositie
+          - team
+          type: string
+        identifier:
+          $ref: '#/components/schemas/IdentifierOrganisatieeenheid'
+        moedereenheid:
+          $ref: '#/components/schemas/BasisModelOrganisatieeenheid'
+      description: ''
+    HoofdModelOrganisatieEenheid:
+      allOf:
+      - $ref: '#/components/schemas/BasisModelOrganisatieeenheid'
+      - type: object
+        required:
+        - leidinggevende
+        properties:
+          leidinggevende:
+            $ref: '#/components/schemas/Medewerker'
+      title: Hoofd model, organisatie-eenheid
+    IdentifierInschrijvingCursus:
+      type: string
+      title: Identifier, inschrijving cursus
+      description: Cursuscode
+    IdentifierOrganisatieeenheid:
+      type: string
+      title: Identifier, organisatie-eenheid
+      description: ''
+    IdentifierInschrijvingOpleiding:
+      type: string
+      title: Identifier, inschrijving opleiding
+      description: Opleidingscode
+    VolledigModelOrganisatieEenheid:
+      allOf:
+      - $ref: '#/components/schemas/HoofdModelOrganisatieEenheid'
+      - type: object
+        required:
+        - medewerkers
+        - field_0
+        properties:
+          medewerkers:
+            type: array
+            items:
+              $ref: '#/components/schemas/Medewerker'
+            uniqueItems: true
+      title: Volledig model, organisatie-eenheid
+    IdentifierInschrijvingArrangement:
+      type: string
+      title: Identifier, inschrijving arrangement
+      description: Arrangementcode
+    ComponentIdentifierEduarteDebiteurnummer:
+      type: object
+      required:
+      - systeem
+      - naam
+      - waarde
+      properties:
+        naam:
+          enum:
+          - debiteurnummer
+          type: string
+          default: debiteurnummer
+          examples:
+          - debiteurnummer
+          description: De naam van de identifier (in het externe systeem, of afgeleid hiervan)
+        waarde:
+          type: string
+          description: De identifier waarde (afhankelijk van systeem, altijd getoond als string)
+        systeem:
+          enum:
+          - Eduarte
+          type: string
+          default: Eduarte
+          examples:
+          - Eduarte
+          description: Het systeem waarin deze entiteit met deze identifier bekend is
+  responses:
+    NotFound:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+          example:
+            error: Resource not found
+      description: Niet gevonden.
+    BadGateway:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+          example:
+            error: Bad gateway
+      description: Bad gateway.
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+          example:
+            error: Bad request
+      description: Ongeldige aanvraag.
+    InternalServerError:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+          example:
+            error: Internal server error
+      description: Interne serverfout.
+  parameters:
+    QueryParameterVelden:
+      in: query
+      name: velden
+      schema:
+        type: string
+      required: false
+      description: Lijst van velden om op te halen, gescheiden door komma’s.
+    QueryParameterUitbreiden:
+      in: query
+      name: uitbreiden
+      schema:
+        type: string
+      required: false
+      description: Lijst van subresources om uit te breiden, gescheiden door komma’s.
+    PadParameterCursusIdentifier:
+      in: path
+      name: identifier
+      schema:
+        type: string
+        pattern: CURS[0-9]{1,8}
+      required: true
+      description: Een geldige identifier voor een cursus
+    PadParameterPersoonIdentifier:
+      in: path
+      name: identifier
+      schema:
+        type: string
+        pattern: (?:\p{L}{4})|(?:AV[0-9]+)|(?:PS[0-9]+)
+      required: true
+      description: Een geldige identifier voor een medewerker of student
+    PadParameterStudentIdentifier:
+      in: path
+      name: identifier
+      schema:
+        type: string
+        pattern: (?:AV[0-9]+)|(?:PS[0-9]+)
+      required: true
+      description: Een geldige identifier voor een student
+    PadParameterMedewerkerIdentifier:
+      in: path
+      name: identifier
+      schema:
+        type: string
+        pattern: '[0-9]{6}'
+      required: true
+      description: Een geldige identifier voor een medewerker (uniek Summa personeelsnummer)
+    PadParameterOrganisatieIdentifier:
+      in: path
+      name: identifier
+      schema:
+        type: string
+        pattern: \w+
+      required: true
+      description: Een geldige identifier voor een organisatie
+  securitySchemes: {}
+tags:
+- name: Personen
+  description: |
+    **Persoonsinformatie**
+
+    Informatie over studenten en medewerkers, zoals naam, geboortedatum en contactgegevens. Gebruik deze endpoints om basisgegevens van personen op te halen.
+- name: Gebruikers
+  description: |
+    **Gebruikersgegevens (SSO)**
+
+    Informatie over gebruikersaccounts afkomstig uit het Identity Provider (IDP) systeem. Handig voor Single Sign-On (SSO) en authenticatie.
+- name: Contactgegevens
+  description: |
+    **Contactgegevens**
+
+    Telefoonnummer(s) en e-mailadressen van personen, studenten en medewerkers. Gebruik deze endpoints om actuele contactinformatie op te vragen.
+- name: Studenten
+  description: |
+    **Studentgegevens**
+
+    Gegevens van en gerelateerd aan studenten, zoals inschrijvingen, stamgroepen en contactinformatie. Zie ook de voorbeelden bij de endpoints.
+- name: Inschrijvingen
+  description: |
+    **Inschrijvingen**
+
+    Informatie over inschrijvingen van studenten op opleidingen, arrangementen en cursussen. Handig voor het volgen van studievoortgang.
+- name: Medewerkers
+  description: |
+    **Medewerkersgegevens**
+
+    Gegevens van en gerelateerd aan medewerkers, inclusief aanstellingen en contactinformatie.
+- name: Stamgroepen
+  description: |
+    **Stamgroepen**
+
+    Stamgroepen koppelen studenten aan studiecoaches (studieloopbaanbegeleiders). Gebruik deze endpoints om groepsindelingen en begeleiders op te halen.
+- name: Aanstellingen
+  description: |
+    **Aanstellingen**
+
+    Informatie over aanstellingen van medewerkers bij verschillende organisatie-eenheden. Zie de voorbeelden voor structuur.
+- name: Cursussen
+  description: |
+    **Cursusgegevens**
+
+    Gegevens over aangeboden cursussen, zoals naam, code en status. Gebruik deze endpoints om cursusinformatie op te halen.
+- name: Groepen
+  description: |-
+    **Groepen**
+
+    Groepen koppelen studenten o.a. aan studiecoaches (studieloopbaanbegeleiders). Gebruik deze endpoints om groepsindelingen en begeleiders op te halen.
+- name: Studentbegeleiders
+  description: |-
+    **Studentbegeleiders**
+
+    Gebruik deze endpoints om de begeleiders van een student op te halen.
+- name: Adressen
+  description: |-
+    **Addressen**
+
+    Adressen van personen, studenten en medewerkers. Gebruik deze endpoints om actuele adresgegevens op te vragen.
+  externalDocs:
+    url: ''
+    description: ''
+- name: Organisaties
+  description: |-
+    **Organisaties**
+
+    Gegevens van en gerelateerd aan organisaties, zoals inschrijvingen en contactinformatie. Zie ook de voorbeelden bij de endpoints.
+  externalDocs:
+    url: ''
+    description: ''
+- name: Componenten
+  description: |-
+    **Componenten**
+
+    Dit zijn kleine herbruikbare componenten die in verschillende schema's terug komen.
+  externalDocs:
+    url: ''
+    description: ''
