@@ -1,0 +1,14 @@
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node (if using Spectral or other JS-based tooling)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build / generated output
+dist/
+out/
