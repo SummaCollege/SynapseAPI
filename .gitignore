@@ -12,3 +12,4 @@ yarn.lock
 # Build / generated output
 dist/
 out/
+tsp-output/

@@ -17,18 +17,47 @@ De huidige versie van de specificatie uit de main-branch is te bekijken via de v
 
 ## Structuur
 
-- `openapi.yaml` — de OpenAPI-specificatie voor de publieke API's.
+- `main.tsp` — het hoofdbestand van de TypeSpec-specificatie.
+- `src/` — modulaire TypeSpec bronbestanden:
+  - `src/gemeenschappelijk/` — gedeelde componenten (adressen, contactgegevens, identifiers, parameters, foutresponsen).
+  - `src/modellen/` — domeinmodellen (groepen, cursussen, personen, aanstellingen, organisaties, inschrijvingen).
+  - `src/routes.tsp` — alle REST-endpoints en operaties.
+- `openapi.yaml` — gegenereerde OpenAPI 3.0-specificatie vanuit TypeSpec.
+- `tspconfig.yaml` — TypeSpec compiler- en emitter-configuratie.
 
 ## Gebruik
 
-De specificatie is geschreven in OpenAPI 3.x (YAML) en kan worden bekeken of bewerkt met tools zoals:
+De API-specificatie wordt onderhouden in **TypeSpec** en geëxporteerd naar OpenAPI 3.x.
 
-- Swagger Editor
-- Stoplight Studio
-- VS Code met een OpenAPI/YAML-plugin
+### Vereisten
+- Node.js (v18 of hoger)
+- npm
+
+### Installatie
+```bash
+npm install
+```
+
+### Compileren naar OpenAPI
+Om `openapi.yaml` te genereren vanuit de TypeSpec-broncode:
+```bash
+npm run build
+```
+of direct via:
+```bash
+npx tsp compile .
+```
+
+### Formatteren
+Om alle TypeSpec-bestanden te formatteren volgens standaarden:
+```bash
+npm run format
+```
 
 ## Bijdragen
 
-1. Werk de OpenAPI-specificatie bij of voeg nieuwe endpoints en modellen toe.
-2. Controleer de wijzigingen met een linter zoals Spectral voordat je een pull request opent.
-3. Open een pull request en beschrijf de voorgestelde API-wijzigingen.
+1. Breng wijzigingen aan in de relevante `.tsp` bestanden onder `src/` (volg Nederlandse naamgeving en documentatie).
+2. Voer `npm run build` uit om de `openapi.yaml` bij te werken.
+3. Formatteer de bestanden met `npm run format`.
+4. Controleer de wijzigingen met een linter voordat je een pull request opent.
+5. Open een pull request en beschrijf de voorgestelde API-wijzigingen.
