@@ -23,7 +23,7 @@ interface Studenten {
     };
 
     /**
-     * Dr opgegeven student ophalen
+     * De opgegeven student ophalen
      */
     @get
     @summary("/studenten/{student}")

@@ -22,7 +22,7 @@ interface Medewerkers {
     };
 
     /**
-     * Dr opgegeven medewerker ophalen
+     * De opgegeven medewerker ophalen
      */
     @get
     @summary("/medewerkers/{medewerker}")
